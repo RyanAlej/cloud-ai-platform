@@ -1,0 +1,88 @@
+/* style the entire webpage */
+body {
+    /* use the arial font */
+    font-family: Arial, sans-serif;
+
+    /* center all text in body */
+    text-align: center;
+
+    /* add space around the page content */
+    margin: 50px;
+}
+
+
+/* style the main page title */
+h1 {
+    /* make the title text dark blue. this is a HEX code */
+    color: #1e3a8a;
+
+    /* increase the title size */
+    font-size: 40px;
+}
+
+
+/* style the question input box */
+input {
+    /* set the width of the input box */
+    width: 300px;
+
+    /* add space inside the input box */
+    padding: 10px;
+
+    /* increase the text size */
+    font-size: 16px;
+}
+
+
+/* style the ask button */
+button {
+    /* add space inside the button */
+    padding: 10px 20px;
+
+    /* increase the button text size */
+    font-size: 16px;
+
+    /* change the mouse cursor when hovering */
+    cursor: pointer;
+
+    /* remove the default button border */
+    border: none;
+
+    /* change the button background color */
+    background-color: #2563eb;
+
+    /* change the button text color */
+    color: white;
+
+    /* round the button corners */
+    border-radius: 5px;
+}
+
+
+/* style the button when the mouse hovers over it */
+button:hover {
+    /* change the background color while hovering */
+    background-color: #1d4ed8;
+}
+
+
+/* style the AI response */
+/* find the HTML element whose id is answer */
+#answer {
+    /* add space above the response */
+    margin-top: 20px;
+
+    /* increase the response text size */
+    font-size: 18px;
+
+    /* change the response text color */
+    color: #333333;
+}
+
+
+/* style the answer heading */
+h2 {
+    /* add space above the heading */
+    margin-top: 30px;
+}
+

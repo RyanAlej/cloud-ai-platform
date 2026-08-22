@@ -1,0 +1,68 @@
+<!-- tell the browser this is HTML5 -->
+<!DOCTYPE html>
+
+<!-- start the HTML document -->
+<html lang="en">
+
+
+<!-- store information about the webpage -->
+<!-- this is like the settings menu and the user does not see this -->
+<head>
+
+    <!-- allow all text characters -->
+    <!-- use UTF-8 so letters, symbols, and emojis display correctly -->
+    <meta charset="UTF-8">
+
+    <!-- make the page fit phones and different screen sizes -->
+    <!-- META means information about the webpage, user does not see -->
+    <!-- VIEWPORT means the visible area of the webpage inside the browser window -->
+    <!-- width=device-width means don't pretend, use the actual screen width -->
+    <!-- initial-scale=1.0 means open at 100% zoom -->
+    <!-- meta = metadata = information about the page -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- name shown on the browser tab -->
+    <title>AI Cloud Platform</title>
+
+    <!-- connect the CSS file to this webpage -->
+    <!-- <link> = connects an external file to the HTML document -->
+    <!-- rel = specifies the relationship between the HTML document and the linked file -->
+    <!-- stylesheet = HTML value for the rel attribute that tells the browser the linked file contains CSS-->
+    <!-- href = specifies the location (path) of the file being linked -->
+    <!-- the external stylesheet that controls the appearance of the webpage -->
+     <link rel="stylesheet" href="style.css">
+
+</head>
+
+
+<!-- store everything visible on the webpage -->
+ <body>
+
+    <!-- large main title shown to the user -->
+    <h1>AI Cloud Platform</h1>
+
+    <!-- let the user type a question. input element -->
+    <!-- ID is a unique name you give an HTML element -->
+    <!-- element is a complete HTML object. like h1 to h1 section -->
+    <input
+        type="text" 
+        id="question"
+        placeholder="Ask my anything..."
+    >
+
+    <!-- let the user submit their question as a button -->
+    <!-- id="askButton" is the element's internal name, not visible -->
+    <!-- <button>Ask<button> is a sandwhich around ask and is universal button procedure -->
+    <button id="askButton">Ask</button>
+
+    <!-- label on webpage for the AI response -->
+    <h2>Answer</h2>
+
+    <!-- empty paragraph where JavaScript will place the AI response -->
+    <p id="answer"></p>
+
+    <!-- connect the JavaScript file to this webpage -->
+    <script src="script.js"></script>
+
+ </body>
+ </html>
