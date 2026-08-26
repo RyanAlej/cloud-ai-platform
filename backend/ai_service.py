@@ -28,6 +28,7 @@ def ask_openai(question: str):
             question=question,
             answer=response.output_text
         )
+        
         # adds but does not save
         db.add(conversation)
 
@@ -50,7 +51,8 @@ def get_history():
 
         # using my database session (db), query the Conversation table and return all rows as list
         # this is SQLAlchemy library 
-         history = db.query(Conversation).all()
+        # queries the db and returns conversation ordered from highest ID to lowest ID
+         history = db.query(Conversation).order_by(Conversation.id.desc()).all()
 
          db.close()
 

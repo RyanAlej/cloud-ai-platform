@@ -12,6 +12,45 @@ const questionInput = document.getElementById("question");
 // answerParagraph is equal to <p id="answer"></p> from HTML
 const answerParagraph = document.getElementById("answer");
 
+const historyDiv = document.getElementById("history");
+
+
+async function loadHistory() {
+
+    const response = await fetch("http://127.0.0.1:8000/history");
+
+    // json() extract JSON body from response object
+    const data = await response.json();
+
+    // innerHTML = everything between the opening and closing HTML tags
+    historyDiv.innerHTML = "";
+
+    for (const conversation of data) {
+
+        // += for integers adds them together. for strings, it adds the word to the end
+        // ` backtick is the f-string from python 
+        // marked.parse creates a <p> so p cant be in another p, line move down and placed in div
+        // class="conversation-card" means div belongs to this group. each conv. in loop gets that label
+        historyDiv.innerHTML += `
+
+        <div class="conversation-card">
+
+            <p><strong>Question:</strong> ${conversation.question}</p>
+            <p><strong>Answer:</strong></p>
+            ${marked.parse(conversation.answer)}
+            </div>
+        `;
+    }
+}
+
+questionInput.addEventListener("keydown", function (event) {
+
+    if (event.key === "Enter") {
+        askButton.click();
+    }
+});
+
+
 // run this code when the Ask button is clicked
 askButton.addEventListener("click", async function () {
 
@@ -20,6 +59,9 @@ askButton.addEventListener("click", async function () {
     // THEN its asking for the value of question
     // so the HTML question value is contained in the JS variable "question"
     const question = questionInput.value;
+
+    askButton.textContent = "Thinking...";
+    askButton.disabled = true;
 
     // send the question to the FastAPI backend
     // fetch is like requests.post()
@@ -45,17 +87,24 @@ askButton.addEventListener("click", async function () {
             question: question
         })
     });
-    
+
     // convert the HTTP response JSON into a JavaScript object
     const data = await response.json();
 
     // get the answer from the JS object
     const answer = data.answer;
 
-    // put the answer into the HTML paragraph
-    answerParagraph.textContent = answer;
+    // converts the AI's markdown response into HTML, then displays that inside the answer paragraph
+    // innerHTML only accepts HTML string, left side produces parsed string for HTML
+    answerParagraph.innerHTML = marked.parse(answer);
+
+    // change the ask button back 
+    askButton.textContent = "Ask";
+    askButton.disabled = false;
 
     // clear the input box
     questionInput.value = "";
+
+    loadHistory();
 });
 

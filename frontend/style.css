@@ -86,3 +86,65 @@ h2 {
     margin-top: 30px;
 }
 
+
+.conversation-card {
+
+    background-color: #f5f5f5;
+
+    /* border radius controls how curved the corners are */
+    border-radius: 12px;
+
+    /* adds space between the content (text) and border */
+    padding: 20px;
+
+    /* adds space between each element */
+    margin-bottom: 20px;
+}
+
+.conversation-card p {
+
+    /* adds space all around each element */
+    margin: 10px 0;
+}
+
+.conversation-card h1,
+.conversation-card h2,
+.conversation-card h3 {
+
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+/* ol = ordered list. just a numbered list. whenever numbered list appears, use this format */
+.conversation-card ol,
+/* ul = unordered list. this is a bullet list. whenever a bullet list appears, use this format */
+.conversation-card ul {
+
+    padding-left: 30px;
+
+    /* top & bottom = 15px. right & left = 0px */
+    margin: 15px 0;
+}
+
+/* li = list item. stands for ONE item inside a list */
+.conversation-card li {
+
+    /* leave 8px between each numbered item */
+    margin-bottom: 8px;
+}
+
+/* pre = preformatted text. keeps the exact format it came in */
+.conversation-card pre {
+
+    background-color: #2d2d2d;
+    color: white;
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+/* if there is code sent, display it in monospace so its clear to the user */
+.conversation-card code {
+
+    font-family: monospace;
+}
