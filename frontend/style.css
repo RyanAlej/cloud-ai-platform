@@ -7,7 +7,7 @@ body {
     text-align: center;
 
     /* add space around the page content */
-    margin: 50px;
+    margin: 0px;
 }
 
 
@@ -77,6 +77,8 @@ button:hover {
 
     /* change the response text color */
     color: #333333;
+
+    text-align: left;
 }
 
 
@@ -99,6 +101,8 @@ h2 {
 
     /* adds space between each element */
     margin-bottom: 20px;
+
+    text-align: left;
 }
 
 .conversation-card p {
@@ -147,4 +151,42 @@ h2 {
 .conversation-card code {
 
     font-family: monospace;
+}
+
+
+.answer-card {
+
+    background-color: #f5f5f5;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px auto;
+
+    /* max width to let the text stretch across the entire screen */
+    max-width: 1000px;
+}
+
+.user-message {
+
+    text-align: right;
+    margin: 20px 0;
+    max-width: 70%;
+}
+
+.assistant-message {
+
+    text-align: left;
+    margin: 20px 0;
+    max-width: 70%;
+}
+
+.user-row {
+
+    display: flex;
+    justify-content: flex-end;
+}
+
+.assistant-row {
+
+    display: flex;
+    justify-content: flex-start;
 }
