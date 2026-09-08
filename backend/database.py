@@ -1,3 +1,5 @@
+# SQLALCHEMY IS A PYTHON LIBRARY THAT TRANSLATES PYTHON CODE INTO SQL COMMANDS FOR POSTGRESQL
+
 # creates the object Python uses to talk to PostgreSQL
 from sqlalchemy import create_engine
 

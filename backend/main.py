@@ -3,10 +3,25 @@
 # fastAPI routes between python functions like load balancer/manager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from backend.models import QuestionRequest, ConversationResponse
-from backend.ai_service import ask_openai, get_history, delete_history, get_conversation
 
-from backend.database import create_tables
+from backend.models import (
+    QuestionRequest, 
+    ConversationResponse, 
+    ChatSessionResponse, 
+    ChatSession, 
+    RenameChatRequest
+)
+
+from backend.ai_service import (
+    ask_openai, 
+    get_history, 
+    delete_history, 
+    get_conversation, 
+    get_chat_sessions,
+    get_chat
+)
+
+from backend.database import create_tables, SessionLocal
 
 # creates fastAPI application object
 # runs in RAM, not the server
@@ -35,10 +50,17 @@ def home():
 
 
 @app.post("/ask")
-# this means "I want a QuestionRequest object"
+# QuestionRequest is question: str. so request now contains the object which contains question: "how are you?"
+# fastAPI takes the ask_ai value (question: "how are you?"). 
 def ask_ai(request: QuestionRequest):
-    answer = ask_openai(request.question)
-    return {"answer": answer}
+    print(request.chat_id)
+    result = ask_openai(
+
+        request.question,
+        request.chat_id
+    )
+
+    return result
 
 
 # if someone sends a GET request to /history, run the function below
@@ -57,11 +79,70 @@ def delete():
     return delete_history()
 
 
-# if someone sends GET /history/{id}, run the function below
-@app.get("/history/{conversation_id}", response_model=ConversationResponse)
+@app.get("/chat-sessions", response_model=list[ChatSessionResponse])
+def chat_sessions():
+    return get_chat_sessions()
 
-# conversation_id is taken from the URL and passed into the function
-def history_by_id(conversation_id: int):
+@app.get("/chat-sessions/{chat_id}")
+def get_chat_by_id(chat_id: int):
 
-    # pass the ID to the db function and return the result
-    return get_conversation(conversation_id)
+    # this calls the get_chat function AND returns its value which is the chat_id
+    return get_chat(chat_id)
+
+
+@app.patch("/chat-sessions/{chat_id}")
+def rename_chat(chat_id: int, request: RenameChatRequest):
+
+    db = SessionLocal()
+
+    try: 
+        current_chat = (
+
+            db.query(ChatSession)
+            .filter(ChatSession.id == chat_id)
+            .first()
+        )
+
+        if current_chat is None:
+            return {"message": "Chat not found."}
+
+        current_chat.title = request.title
+
+        db.commit()
+
+        return {"message": "Chat renamed successfully."}
+
+    finally:
+        db.close()
+
+
+@app.delete("/chat-sessions/{chat_id}")
+def delete_chat(chat_id: int):
+
+    db = SessionLocal()
+
+    try: 
+
+        current_chat = (
+                   
+            db.query(ChatSession)
+                    
+            .filter(ChatSession.id == chat_id)
+                    
+            .first()
+        )
+
+        if current_chat is None:
+            return {"message": "Chat not found."}
+
+        db.delete(current_chat)
+
+        db.commit()
+
+        return {"message": "Chat deleted."}
+
+    finally: 
+
+        db.close()
+
+    

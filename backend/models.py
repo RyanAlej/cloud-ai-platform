@@ -1,9 +1,11 @@
 # DEFINES THE DATA (THE REQUEST BODY)
 
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import String, Text, ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from backend.database import Base
+
+from typing import Optional
 
 # base model is a pydantic library class. gives your class auto data validation, parsing, & JSON conversion
 # pydantic is a python library that validates, parses, and converts data into python objects
@@ -17,11 +19,17 @@ class QuestionRequest(BaseModel):
     # every request should have a field called question, and it must be a string
     question: str
 
+    chat_id: Optional[int] = None
+
 # QuestionRequest = your own class that represents what data you expect from the user
-# BaseModel = Pydantic's class that gives your class the ability to automatically convert and validate JSON
+# BaseModel = Pydantic's class that gives your class the ability to auto convert and validate JSON
 
 # need jSON input? --> use a BaseModel
 # need JSON output? --> Return a dictionary or BaseModel
+
+
+class RenameChatRequest(BaseModel):
+    title: str
 
 
 #XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
@@ -32,6 +40,25 @@ class ConversationResponse(BaseModel):
     id: int
     question: str
     answer: str
+
+
+class ChatSessionResponse(BaseModel):
+    id: int
+    title: str
+
+
+class ChatSession(Base):
+
+    __tablename__ = "chat_sessions"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+
+    title: Mapped[str] = mapped_column(String)
+
+    conversations: Mapped[list["Conversation"]] = relationship(
+        back_populates="chat",
+        cascade="all, delete-orphan"
+    )
 
 
 # DEFINING THE SCHEMA OF THE TABLE
@@ -46,6 +73,18 @@ class Conversation(Base):
     # mapped_column(...) = tells SQLAlchemy "this is a database column"
     # primary_key=True = every row gets a unique ID
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    # Create a column named chat_id. This column is a foreign key that points to the id column in the chat_sessions table
+        # chat_id: Mapped[int] = mapped_column(ForeignKey("chat_sessions.id"))
+
+    chat_id: Mapped[int] = mapped_column(
+        ForeignKey("chat_sessions.id", ondelete="CASCADE")
+    )
+
+    chat: Mapped["ChatSession"] = relationship(
+
+        back_populates="conversations"
+    )
 
     # question = column name
     # Mapped[str] = column stores Python strings

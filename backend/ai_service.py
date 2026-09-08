@@ -6,9 +6,11 @@ from backend.config import client
 from backend.database import SessionLocal
 
 # importing the Conversation class
-from backend.models import Conversation
+from backend.models import Conversation, ChatSession
 
-def ask_openai(question: str):
+from typing import Optional
+
+def ask_openai(question: str, chat_id: Optional[int] = None):
 
     try:
         response = client.responses.create(
@@ -20,29 +22,65 @@ def ask_openai(question: str):
         # the session object has add(), commit(), close()
         db = SessionLocal()
 
+        # look inside the chat_sessions table and give me the first row
+        # current_chat = db.query(ChatSession).first()
+
+        if chat_id is None:
+            current_chat = ChatSession(
+
+                title="New Chat"
+            )
+
+            db.add(current_chat)
+            db.commit()
+            db.refresh(current_chat)
+
+            title = generate_chat_title(question)
+            
+            current_chat.title = title
+            
+            db.commit()
+
+        else: 
+            current_chat = (
+                # look in the chat_sessions table
+                db.query(ChatSession)
+                # .filter() keep only rows matching this condition
+                # ChatSession.id == chat_id = where the row's id equals chat_id the frontend sent
+                .filter(ChatSession.id == chat_id)
+                # give me the first (and only) matching row
+                .first()
+            )
+
         # creates a python object that represents one row
         # sitting in python memory. PostgreSQL does not know it exists yet
         conversation = Conversation(
             # left side question = from the Conversation object --> question variable
             # right side question = use passed in question variable from the ask_openai function above
+            chat=current_chat,
             question=question,
             answer=response.output_text
         )
-        
+
         # adds but does not save
         db.add(conversation)
 
         # means save/permanently store this
         db.commit()
 
-        return response.output_text
+        return {
 
-    except Exception:
-        return "Sorry, something went wrong."
+            "answer": response.output_text,
+            "chat_id": current_chat.id
+        }
+
+    except Exception as e:
+        print(e)
+        raise
 
     # finally ALWAYS runs
     finally:
-            db.close()
+        db.close()
 
 
 def get_history():
@@ -57,6 +95,35 @@ def get_history():
          db.close()
 
          return history
+
+
+def get_chat_sessions():
+
+    db = SessionLocal()
+
+    chat_sessions = db.query(ChatSession).order_by(ChatSession.id.desc()).all()
+
+    db.close()
+
+    return chat_sessions
+
+
+# return every conversation that belongs to the selected chat
+def get_chat(chat_id: int):
+
+    db = SessionLocal()
+
+    conversations = db.query(Conversation).filter(
+
+        # give me all Conversation rows where the chat_id column equals the chat_id passsed into this function
+        Conversation.chat_id == chat_id
+
+    # all() tells SQLAlchemy to run the query and give every matching row
+    ).all()
+
+    db.close()
+
+    return conversations
 
 
 # IMPORTANT*************************************************************
@@ -108,3 +175,21 @@ def get_conversation(conversation_id):
 
     finally:
          db.close()
+
+
+def generate_chat_title(question):
+
+    # client is your OpenAI connection with API key
+    # responses is built in to OpenAI that handles AI requests
+    response = client.responses.create(
+        model="gpt-5.5",
+        input=f"""
+        generate a short chat title (2-5 words) for the following user question.
+
+        question:
+        {question}
+
+        only return the title. Do not include quotes or any explanation.
+        """
+    )
+    return response.output_text
