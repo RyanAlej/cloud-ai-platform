@@ -13,10 +13,6 @@ from typing import Optional
 def ask_openai(question: str, chat_id: Optional[int] = None):
 
     try:
-        response = client.responses.create(
-            model="gpt-5.5",
-            input=question
-        )
 
         # creates database session object CONNECTION. opens a conversation with PostgreSQL
         # the session object has add(), commit(), close()
@@ -51,6 +47,36 @@ def ask_openai(question: str, chat_id: Optional[int] = None):
                 # give me the first (and only) matching row
                 .first()
             )
+
+        history = (
+
+            db.query(Conversation)
+            .filter(Conversation.chat == current_chat)
+            .all()
+        )
+
+        conversation_history = ""
+
+        for convo in history:
+            conversation_history += f"User: {convo.question}\n"
+            conversation_history += f"Assistant: {convo.answer}\n"
+
+        prompt = (
+
+            conversation_history
+            + f"\nUser: {question}\n"
+            + "Assistant:"
+        )
+
+        # User: "How are you?"
+        # Assistant: ...
+        # PLUS all the conversation history from before
+
+        response = client.responses.create(
+
+                    model="gpt-5.5",
+                    input=prompt
+                )
 
         # creates a python object that represents one row
         # sitting in python memory. PostgreSQL does not know it exists yet

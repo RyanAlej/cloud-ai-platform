@@ -38,6 +38,29 @@ sidebarToggle.addEventListener("click", function () {
     document.body.classList.toggle("sidebar-open");
 });
 
+document.addEventListener("click", function (event) {
+
+    // does the sidebar currently have the collapsed class? 
+    // ! flips the answer so if true it is now false
+    // its asking... is the sidebar open?
+    if (!sidebar.classList.contains("collapsed")
+
+    // does the sidebar contain the element that was clicked? 
+    && !sidebar.contains(event.target)
+
+    // the click was NOT on the toggle button
+    && !sidebarToggle.contains(event.target) 
+
+    // ENTIRE SEQUENCE FROM ABOVE
+        // IF... the sidebar is open
+        // AND the click was outisde the sidebar
+        // AND the click was not on the toggle button
+        // then close the sidebar
+) {
+    sidebar.classList.add("collapsed");
+    document.body.classList.remove("sidebar-open");
+}});
+
 
 function addConversation(question, answer) {
 
