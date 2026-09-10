@@ -1,0 +1,53 @@
+# services is something Docker should create and run
+services:
+  app:
+
+    # . means look in the current folder
+    # build using your Dockerfile
+    build: . 
+
+    # name the running container maghub-app
+    container_name: maghub-app
+
+    # connect your mac's port 8000 to the container's port 8000
+    ports: 
+      - "8000:8000"
+
+    # load all your environment variables from .env
+    env_file:
+      - .env
+
+    # before your start my FastAPI container, start the PostgreSQL container
+    depends_on:
+      postgres:
+        condition: service_healthy
+    
+    # whenever you start this container, automatically run uvicorn
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+
+  
+  # changing the database host from your mac (localhost) to the PostgreSQL Docker container (postgres)
+  # SHORTER: you're telling FastAPI to connect to the PostgreSQL container instead of your mac
+  postgres:
+
+    # download the official PostgresSQL 17 image from Docker Hub
+    image: postgres:17
+    container_name: maghub-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: mag_ai_platform
+    ports: 
+      - "5433:5432"
+    volumes: 
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: "5s"
+      timeout: "5s"
+      retries: 5
+      start_period: "30s"
+  
+volumes: 
+  postgres_data:

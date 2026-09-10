@@ -18,7 +18,7 @@ body {
     box-sizing: border-box;
     
     padding-bottom: 100px;
-    padding: 24px;
+    padding: 0;
     padding-top: 58px;
 
     height: 100vh;
@@ -26,9 +26,10 @@ body {
 
 #chatContainer {
 
-    position: fixed;
+    flex: 1;
+    width: 100%;
 
-    max-height: calc(90vh - 160px);
+    /* max-height: calc(90vh - 160px); */
 
     overflow-y: auto;
     padding: 60px 0px;
@@ -217,7 +218,7 @@ body.sidebar-open #header {
 
     display: flex;
     justify-content: flex-end;
-    padding-right: 12px;
+    padding-right: 8px;
 }
 
 .ai-message {
@@ -234,6 +235,7 @@ body.sidebar-open #header {
 
     display: flex;
     justify-content: flex-start;
+    padding-left: 0;
 }
 
 #inputBar {
