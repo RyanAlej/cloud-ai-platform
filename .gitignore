@@ -21,3 +21,10 @@ __pycache__/
 *.db
 
 *.png
+
+# ignore terraform
+.terraform/
+
+*.tfstate
+
+*.tfstate.*
