@@ -140,7 +140,7 @@ function addSystemMessage(message) {
 
 async function loadChatSessions() {
 
-    const response = await fetch("http://127.0.0.1:8000/chat-sessions");
+    const response = await fetch("/chat-sessions");
 
     const chatSessions = await response.json();
 
@@ -188,7 +188,7 @@ async function loadChatSessions() {
 
             const response = await fetch(
 
-            `http://127.0.0.1:8000/chat-sessions/${currentChatId}`
+            `/chat-sessions/${currentChatId}`
         );
 
         const conversations = await response.json();
@@ -260,7 +260,7 @@ newChatButton.addEventListener("click", function() {
 
 async function loadHistory() {
 
-    const response = await fetch("http://127.0.0.1:8000/history");
+    const response = await fetch("/history");
 
     // json() extract JSON body from response object
     const data = await response.json();
@@ -340,7 +340,7 @@ askButton.addEventListener("click", async function () {
         // fetch is like requests.post()
         // send something to this URL which is the FastAPI endpoint
         // send the request... and wait here until the server replies
-        const response = await fetch("http://127.0.0.1:8000/ask", {
+        const response = await fetch("/ask", {
 
             // send a POST request by sending data
             method: "POST",
@@ -502,7 +502,7 @@ deleteChat.addEventListener("click", async function (event) {
 
     const chatId = parseInt(contextMenu.dataset.chatId);
 
-    await fetch (`http://127.0.0.1:8000/chat-sessions/${chatId}`, {
+    await fetch (`/chat-sessions/${chatId}`, {
 
         method: "DELETE"
     });
@@ -518,7 +518,7 @@ renameChat.addEventListener("click", async function() {
 
     const newTitle = prompt("Enter a new chat title: ");
 
-    await fetch (`http://127.0.0.1:8000/chat-sessions/${chatId}`, {
+    await fetch (`/chat-sessions/${chatId}`, {
 
         method: "PATCH",
 
