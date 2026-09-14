@@ -288,14 +288,14 @@ questionInput.addEventListener("keydown", function (event) {
 // run this code when the Ask button is clicked
 askButton.addEventListener("click", async function () {
 
+    // stores which chat this request started from so changing chats later doesn't change response belongs
+    // basically copying the value at this moment 
+    let requestChatId = currentChatId;
+
     try {
 
         // .value gets the current text entered inside the question input element
         const question = questionInput.value;
-
-        // stores which chat this request started from so changing chats later doesn't change response belongs
-        // basically copying the value at this moment 
-        let requestChatId = currentChatId;
 
         // remembers whether this request originally start from the new chat screen
         const requestStartedAsNewChat = requestChatId === null;
