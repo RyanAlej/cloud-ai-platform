@@ -10,34 +10,33 @@ from backend.models import Conversation, ChatSession
 
 from typing import Optional
 
-def ask_openai(question: str, chat_id: Optional[int] = None):
+def get_or_create(question: str, chat_id: Optional[int] = None):
 
-    try:
+    db = SessionLocal()
 
-        # creates database session object CONNECTION. opens a conversation with PostgreSQL
-        # the session object has add(), commit(), close()
-        db = SessionLocal()
+    try: 
 
         # look inside the chat_sessions table and give me the first row
         # current_chat = db.query(ChatSession).first()
-
+            
         if chat_id is None:
             current_chat = ChatSession(
-
+            
                 title="New Chat"
             )
-
+            
             db.add(current_chat)
             db.commit()
             db.refresh(current_chat)
-
+            
             title = generate_chat_title(question)
-            
+                        
             current_chat.title = title
-            
+                        
             db.commit()
-
+            
         else: 
+            
             current_chat = (
                 # look in the chat_sessions table
                 db.query(ChatSession)
@@ -47,6 +46,30 @@ def ask_openai(question: str, chat_id: Optional[int] = None):
                 # give me the first (and only) matching row
                 .first()
             )
+
+        return current_chat.id
+
+    finally:
+        db.close()
+        
+
+def ask_openai(question: str, chat_id: Optional[int] = None):
+
+    # creates database session object CONNECTION. opens a conversation with PostgreSQL
+    # the session object has add(), commit(), close()
+    db = SessionLocal()
+
+    # calls the get_or_create function and takes the current_chat.id return
+        # chat_id = get_or_create(question, chat_id)
+
+    current_chat = (
+
+        db.query(ChatSession)
+        .filter(ChatSession.id == chat_id)
+        .first()
+    )
+
+    try:
 
         history = (
 
@@ -68,24 +91,59 @@ def ask_openai(question: str, chat_id: Optional[int] = None):
             + "Assistant:"
         )
 
+
+        # stores the complete AI answer as chunks arrive
+        full_answer = ""
+
+        # opens a streaming response so openAI sends the answer in pieces
+        with client.responses.stream(
+
+            model="gpt-5.5",
+            input=prompt
+
+        ) as stream:
+
+        # it loops through each event from the OpenAI response stream. Each current event gets 
+            # temporarily stored in event. Then we check whether that event contains a new piece of 
+            # output text. If it does, we grab that text from event.delta
+
+            # loops through each event openAI sends through the stream
+            for event in stream:
+
+                # only use events that contain a new piece of AI-generated text
+                # openAI's SDK gives python an event object each time something happens in the stream
+                # delta = the newest piece of text openAI just generated
+                if event.type == "response.output_text.delta":
+
+                    # take the text inside the event object and store in text_chunk variable
+                    text_chunk = event.delta
+
+                    # adds the newest piece to the complete answer
+                    full_answer += text_chunk
+
+                    # sends this piece outward immediately, then pauses until the next piece for the user
+                    # yield = send a result, pause the function, then continue when next result available
+                    yield text_chunk
+
+
         # User: "How are you?"
         # Assistant: ...
         # PLUS all the conversation history from before
 
-        response = client.responses.create(
+        # response = client.responses.create(
 
-                    model="gpt-5.5",
-                    input=prompt
-                )
+            # model="gpt-5.5",
+            # input=prompt)
 
         # creates a python object that represents one row
         # sitting in python memory. PostgreSQL does not know it exists yet
         conversation = Conversation(
+
             # left side question = from the Conversation object --> question variable
             # right side question = use passed in question variable from the ask_openai function above
             chat=current_chat,
             question=question,
-            answer=response.output_text
+            answer=full_answer
         )
 
         # adds but does not save
@@ -94,14 +152,9 @@ def ask_openai(question: str, chat_id: Optional[int] = None):
         # means save/permanently store this
         db.commit()
 
-        return {
-
-            "answer": response.output_text,
-            "chat_id": current_chat.id
-        }
 
     except Exception as e:
-        print(e)
+        print(f"Error in ask_openai: {e}")
         raise
 
     # finally ALWAYS runs

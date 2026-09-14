@@ -8,7 +8,7 @@
 
     <title>AI Magistrate Cloud Platform</title>
 
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="/static/style.css">
 
 </head>
 
@@ -16,6 +16,10 @@
 <body>
 
     <div id="appLayout">
+
+        <div class="new-chat-message">
+
+        </div>
 
         <aside id="sidebar" class="collapsed">
 
@@ -26,9 +30,6 @@
 
 
             </div>
-
-
-    <hr>
 
 
             <div id="sidebarButtons">
@@ -46,6 +47,10 @@
                 </button>
 
             </div>
+
+            <button id="newChatButton">
+                +
+            </button>
 
         </aside>
 
@@ -100,6 +105,6 @@
     <!-- loads the marked JS library so app can convert AI markdown into proper HTML format -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
-    <script src="script.js"></script>
+    <script src="/static/script.js"></script>
 
  </body>

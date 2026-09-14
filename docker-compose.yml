@@ -17,13 +17,18 @@ services:
     env_file:
       - .env
 
+    # instead of using copy of code that was baked into the image, use the files from my project folder
+    volumes: 
+      - .:/app
+
     # before your start my FastAPI container, start the PostgreSQL container
     depends_on:
       postgres:
         condition: service_healthy
     
     # whenever you start this container, automatically run uvicorn
-    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000
+    # reload makes the server auto restart
+    command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
   
   # changing the database host from your mac (localhost) to the PostgreSQL Docker container (postgres)

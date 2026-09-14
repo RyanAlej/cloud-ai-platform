@@ -2,6 +2,12 @@
 
 # fastAPI routes between python functions like load balancer/manager
 from fastapi import FastAPI
+
+# StreamingResponse = sends data to the browser gradually instead of all at once
+from fastapi.responses import FileResponse, StreamingResponse
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.models import (
@@ -18,7 +24,8 @@ from backend.ai_service import (
     delete_history, 
     get_conversation, 
     get_chat_sessions,
-    get_chat
+    get_chat,
+    get_or_create
 )
 
 from backend.database import create_tables, SessionLocal
@@ -29,6 +36,15 @@ from backend.database import create_tables, SessionLocal
 # go into backend/main.py and find the variable named app, now Uvicorn has FastAPI object
 app = FastAPI()
 
+frontend_path = Path(__file__).parent.parent / "frontend"
+
+app.mount(
+
+    "/static",
+    StaticFiles(directory=frontend_path),
+    name="static"
+)
+
 # enable CORS so browsers allow the frontend to sent HTTP requests to this backend
 # allow the front end (JS) to communicate with this FastAPI backend through the browser
 app.add_middleware(
@@ -37,6 +53,9 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+
+    # allows JS to read the custom X-Chat_Id response header
+    expose_headers=["X-Chat-Id"],
 )
 
 create_tables()
@@ -46,7 +65,7 @@ create_tables()
 # one HTTP request --> one database session
 @app.get("/")
 def home():
-    return {"message": "API is running"}
+    return FileResponse(frontend_path / "index.html")
 
 
 @app.post("/ask")
@@ -54,13 +73,29 @@ def home():
 # fastAPI takes the ask_ai value (question: "how are you?"). 
 def ask_ai(request: QuestionRequest):
     print(request.chat_id)
-    result = ask_openai(
+
+    chat_id = get_or_create(
 
         request.question,
         request.chat_id
     )
 
-    return result
+    # sends each yielded AI text chunk to the browser as it arrives
+    return StreamingResponse(
+
+        ask_openai(
+            request.question,
+            chat_id
+        ),
+
+        # tells the browser the streamed data is plain text
+        media_type="text/plain",
+
+        headers={
+
+            "X-Chat-Id": str(chat_id)
+        }
+    )
 
 
 # if someone sends a GET request to /history, run the function below

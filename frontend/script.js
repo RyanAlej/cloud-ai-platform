@@ -24,6 +24,11 @@ const sidebarToggle = document.getElementById("sidebarToggle");
 
 let currentChatId = null;
 
+// new Set() creates a collection that stores unique chat IDs with unread AI responses
+const unreadChatIds = new Set();
+
+const newChatButton = document.getElementById("newChatButton");
+
 const contextMenu = document.getElementById("contextMenu");
 
 const deleteChat = document.getElementById("deleteChat");
@@ -42,6 +47,7 @@ document.addEventListener("click", function (event) {
 
     // does the sidebar currently have the collapsed class? 
     // ! flips the answer so if true it is now false
+
     // its asking... is the sidebar open?
     if (!sidebar.classList.contains("collapsed")
 
@@ -51,6 +57,9 @@ document.addEventListener("click", function (event) {
     // the click was NOT on the toggle button
     && !sidebarToggle.contains(event.target) 
 
+    // click is NOT inside the context menu
+    && !contextMenu.contains(event.target)
+
     // ENTIRE SEQUENCE FROM ABOVE
         // IF... the sidebar is open
         // AND the click was outisde the sidebar
@@ -58,6 +67,7 @@ document.addEventListener("click", function (event) {
         // then close the sidebar
 ) {
     sidebar.classList.add("collapsed");
+    console.log("Closing sidebar");
     document.body.classList.remove("sidebar-open");
 }});
 
@@ -89,12 +99,29 @@ function addConversation(question, answer) {
 
 function addChatSession(chatId, title) {
 
+    unreadNotificationsClass = unreadChatIds.has(chatId) ? " unread" : "";
+
     chatSessionsContainer.innerHTML += `
     
         <div class="chat-session" data-chat-id="${chatId}">
-            ${title}
+            <span class="chat-title">${title}</span>
+            <span class="unread-dot${unreadNotificationsClass}"></span>
         </div>
     `;
+
+    // checks whether this chat ID is stored as unread
+    // .has() means check whether that chatId currently exists inside the set
+    if (unreadChatIds.has(chatId)) {
+
+        // finds the unread dot inside this specific chat session
+        const unreadDot = document.querySelector(
+
+            `.chat-session[data-chat-id="${chatId}"] .unread-dot`
+        );
+
+        // makes the stored unread notification visible again
+        unreadDot.classList.add("unread");
+    }
 }
 
 
@@ -135,14 +162,29 @@ async function loadChatSessions() {
 
         button.addEventListener("click", async function () {
 
+            // clears the input box when switching to another chat
+            questionInput.value = "";
+
+            askButton.textContent = "Ask";
+            askButton.disabled = false;
+
             document.querySelectorAll(".chat-session").forEach(function(chat) {
                 chat.classList.remove("active");
             });
 
             button.classList.add("active");
 
+            // finds the unread notification dot inside the chat that was just opened
+            const unreadDot = button.querySelector(".unread-dot");
+
+            // removes the unread class so the notification dot becomes hidden again
+            unreadDot.classList.remove("unread");
+
             // data-chat-id corresponds to the template literal as HTML attribute NOT CLASS
             currentChatId = parseInt(button.getAttribute("data-chat-id"));
+
+            // removes the opened chat ID from the Set because its response has now been seen
+            unreadChatIds.delete(currentChatId);
 
             const response = await fetch(
 
@@ -184,6 +226,37 @@ async function loadChatSessions() {
 
 }}
 
+// flow goes = no current chat --> blank screen --> no old chat highlighted
+newChatButton.addEventListener("click", function() {
+
+    currentChatId = null;
+
+    questionInput.value = "";
+    askButton.textContent = "Ask";
+    askButton.disabled = false;
+
+    chatContainer.innerHTML = `
+
+        <div class="new-chat-message">
+            <h2>New Chat</h2>
+            <p>Ask a question to start a conversation</p>
+        </div>
+    `;
+
+    document.querySelectorAll(".chat-session").forEach(function(button) {
+
+        button.classList.remove("active");
+    });
+
+    // physically collapses the sidebar
+    sidebar.classList.add("collapsed");
+
+    // moves your header/input bar back to their normal positions
+    document.body.classList.remove("sidebar-open");
+
+    questionInput.focus();
+});
+
 
 async function loadHistory() {
 
@@ -215,69 +288,181 @@ questionInput.addEventListener("keydown", function (event) {
 // run this code when the Ask button is clicked
 askButton.addEventListener("click", async function () {
 
-
     try {
 
-    // store the user's question
-    // questionInput references the <input id="question"> element in HTML
-    // THEN its asking for the value of question
-    // so the HTML question value is contained in the JS variable "question"
-    const question = questionInput.value;
+        // .value gets the current text entered inside the question input element
+        const question = questionInput.value;
 
-    // trim is like python .strip()
-    if (question.trim() === "") {
+        // stores which chat this request started from so changing chats later doesn't change response belongs
+        // basically copying the value at this moment 
+        let requestChatId = currentChatId;
 
-        addSystemMessage("Please enter a valid question.");
-        return;
+        // remembers whether this request originally start from the new chat screen
+        const requestStartedAsNewChat = requestChatId === null;
+
+        // .trim() removes the whitespace from the beginning/end so blank spaces don't count as question
+        if (question.trim() === "") {
+
+            addSystemMessage("Please enter a valid question.");
+            return;
+        }
+
+        askButton.textContent = "Thinking...";
+        askButton.disabled = true;
+
+
+        // .queryselector() searches the HTML and returns the first element with this class
+        // stores the new-chat-message HTML element OR null if it is not on the page
+            // const newChatMessage = document.querySelector(".new-chat-message");
+
+
+        // checks whether newChatMessage actually contains an HTML element
+        // if the new chat placeholder exists, run the code inside the braces
+        if (currentChatId === null) {
+
+            // = "" replaces everything currently inside the chatContainer
+            chatContainer.innerHTML = "";
+        }
+
+        // .insertAdjacentHTML("beforeend",...) adds new HTML to the end of chatContainer without
+            // replacing its existing contents
+        chatContainer.insertAdjacentHTML("beforeend", `
+        
+            <div class="user-row">
+                <div class="user-message">
+                    ${question}
+                </div>
+            </div>
+        `);
+        
+        
+        // send the question to the FastAPI backend
+        // fetch is like requests.post()
+        // send something to this URL which is the FastAPI endpoint
+        // send the request... and wait here until the server replies
+        const response = await fetch("http://127.0.0.1:8000/ask", {
+
+            // send a POST request by sending data
+            method: "POST",
+
+            // headers tells FastAPI we're sending JSON, otherwise FastAPI wouldn't know how to interpret it
+            // content type = what type of data is in the body
+            // then it would be the body is formatted as JSON
+            // application/json is an HTTP standard not JS
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            // convert the JavaScript object into JSON
+            // JSON.stringify means to convert this JS object (question: question) into JSON before sending
+            // the body of this HTTP request is this JSON
+            body: JSON.stringify({
+                question: question,
+                chat_id: requestChatId
+            })
+        });
+
+        // this is placed here so not using data from a failed request and stops it before
+        // check whether the server responded with an error status
+        if (!response.ok) {
+
+            // manually create an error so the catch block handles it
+            // something went wrong... stop executing this try block and jump to catch
+            throw new Error("Server returned an error.");
+        }
+
+        const responseChatId = response.headers.get("X-Chat-Id");
+
+        console.log("Chat ID header from backend:", responseChatId);
+
+        // converts the returned chat ID from text into a number and stores it as request's perm chat ID
+        requestChatId = parseInt(responseChatId);
+
+        // only change the currently viewed chat ID if the user has not switched to another chat
+        // are we currently starting from new chat, where there wasn't an ID yet?
+        // OR
+        // are we still looking at the same chat this request belongs to?
+        // IF SO then safe to set currentChatId to the returned ID
+        if (
+            (requestStartedAsNewChat && currentChatId === null) ||
+            currentChatId === requestChatId
+        ) {
+
+            currentChatId = requestChatId;
+        }
+
+        // .body is the response data stream
+        // .getReader() is built-in JS method that creates an object used to read data from stream
+        const reader = response.body.getReader();
+
+        // TextDecoder is a built-in JS class that converts bytes into readable text
+        const decoder = new TextDecoder();
+
+        // creates an empty AI message element that the streamed text will fill
+        // refer to definition above for insertAdjacentHTML...
+        chatContainer.insertAdjacentHTML("beforeend", `
+        
+            <div class="ai-row">
+                <div class="ai-message streaming-message"></div>
+            </div>
+        `);
+
+        // querySelector finds the first HTML element with the streaming-message class
+        const aiMessage = document.querySelector(".streaming-message");
+
+        // stores all text chunks together as one complete answer
+        let fullAnswer = "";
+
+        while (true) {
+
+            // .read() gets the next chunk from the stream
+            // value = the chunk of bytes
+            // done = boolean saying whether the stream ended
+            // waits for the next stream chunk, then stores bytes in VALUE and finished status in DONE
+            const { value, done } = await reader.read();
+
+            // ends the loop when the stream is finished
+            if (done) {
+                break;
+            }
+
+            // .decode() converts the byte chunk into text
+            // stream: true = tells TextDecoder that more chunks are still coming
+            const textChunk = decoder.decode(value, { stream: true });
+
+            fullAnswer += textChunk;
+
+            // marked.parse converts the accumulated Markdown answer into HTML
+            aiMessage.innerHTML = marked.parse(fullAnswer);
+        };
+
+    // .classList.remove() removes the temporary streaming-message class after AI response finishes
+    aiMessage.classList.remove("streaming-message");
+
+    // if the AI response finished in a chat that the user is no longer viewing
+    if (currentChatId !== requestChatId) {
+
+        // stores this chat ID in the Set so the app remembers it has an unread AI response
+        unreadChatIds.add(requestChatId);
     }
-
-    askButton.textContent = "Thinking...";
-    askButton.disabled = true;
-
-    // send the question to the FastAPI backend
-    // fetch is like requests.post()
-    // send something to this URL which is the FastAPI endpoint
-    // send the request... and wait here until the server replies
-    const response = await fetch("http://127.0.0.1:8000/ask", {
-
-        // send a POST request by sending data
-        method: "POST",
-
-        // headers tells FastAPI we're sending JSON, otherwise FastAPI wouldn't know how to interpret it
-        // content type = what type of data is in the body
-        // then it would be the body is formatted as JSON
-        // application/json is an HTTP standard not JS
-        headers: {
-            "Content-Type": "application/json"
-        },
-
-        // convert the JavaScript object into JSON
-        // JSON.stringify means to convert this JS object (question: question) into JSON before sending
-        // the body of this HTTP request is this JSON
-        body: JSON.stringify({
-            question: question,
-            chat_id: currentChatId
-        })
-    });
-
-    // convert the HTTP response JSON into a JavaScript object
-    const data = await response.json();
-
-    currentChatId = data.chat_id;
-
-    // get the answer from the JS object
-    const answer = data.answer;
-
-    addConversation(question, answer);
 
     await loadChatSessions();
 
-    }   
+    }
 
 
     catch (errorObject) {
 
-        addSystemMessage("Unable to reach the server.")
+        // this comes from throw error and shows the message of the errorObject 
+        if (errorObject.message === "Server returned an error.") {
+
+            addSystemMessage("The server encountered an error. Please try again.");
+        }
+
+        else {
+
+            addSystemMessage("Unable to reach the server.");
+        }
 
         // error prints text with icon and in red in the dev console
         console.error(errorObject);
@@ -285,14 +470,18 @@ askButton.addEventListener("click", async function () {
 
     finally {
 
-    // change the ask button back 
-    askButton.textContent = "Ask";
-    askButton.disabled = false;
+        // only reset the controls if the user is still viewing
+            // the same chat that started this request
+        if (currentChatId === requestChatId) {
+            // change the ask button back 
+            askButton.textContent = "Ask";
+            askButton.disabled = false;
 
-    // clear the input box
-    questionInput.value = "";
-
+            // clear the input box
+            questionInput.value = "";
+        };
     }
+
 });
 
 loadChatSessions();
@@ -307,7 +496,9 @@ document.addEventListener("click", function(event) {
 });
 
 
-deleteChat.addEventListener("click", async function () {
+deleteChat.addEventListener("click", async function (event) {
+
+    event.stopPropagation();
 
     const chatId = parseInt(contextMenu.dataset.chatId);
 
@@ -318,7 +509,7 @@ deleteChat.addEventListener("click", async function () {
 
     contextMenu.style.display = "none";
 
-    loadChatSessions();
+    await loadChatSessions();
 });
 
 renameChat.addEventListener("click", async function() {
