@@ -36,6 +36,9 @@ const deleteChat = document.getElementById("deleteChat");
 const renameChat = document.getElementById("renameChat");
 
 
+const chatDrafts = {};
+
+
 
 sidebarToggle.addEventListener("click", function () {
 
@@ -162,8 +165,14 @@ async function loadChatSessions() {
 
         button.addEventListener("click", async function () {
 
-            // clears the input box when switching to another chat
-            questionInput.value = "";
+            // saves the unfinished draft from the chat we're leaving
+            if (currentChatId !== null) {
+
+                // chatDrafts[currentChatId] = the saved draft that belongs to current chat (chatDrafts[7] for example)
+                // questionInput.value = whatever text is currently typed in the input box
+                // this line is saying save what's currently typed into the chat's draft
+                chatDrafts[currentChatId] = questionInput.value;
+            }
 
             askButton.textContent = "Ask";
             askButton.disabled = false;
@@ -182,6 +191,13 @@ async function loadChatSessions() {
 
             // data-chat-id corresponds to the template literal as HTML attribute NOT CLASS
             currentChatId = parseInt(button.getAttribute("data-chat-id"));
+
+            // restores this chat's unfinished draft, or shows an empty input if it has none
+            // questionInput.value = the text that should appear in the input box
+            // chatDrafts[currentChatId] = the saved draft for the chat you just opened
+            // || "" = if there isn't a saved draft, use an empty input instead
+                // || means OR and "" means clear whatever is there to blank
+            questionInput.value = chatDrafts[currentChatId] || "";
 
             // removes the opened chat ID from the Set because its response has now been seen
             unreadChatIds.delete(currentChatId);
@@ -228,6 +244,11 @@ async function loadChatSessions() {
 
 // flow goes = no current chat --> blank screen --> no old chat highlighted
 newChatButton.addEventListener("click", function() {
+
+    if (currentChatId !== null) {
+
+        chatDrafts[currentChatId] = questionInput.value;
+    }
 
     currentChatId = null;
 
@@ -307,7 +328,6 @@ askButton.addEventListener("click", async function () {
             return;
         }
 
-        askButton.textContent = "Thinking...";
         askButton.disabled = true;
 
 
@@ -334,7 +354,68 @@ askButton.addEventListener("click", async function () {
                 </div>
             </div>
         `);
-        
+
+        const newestUserMessage = chatContainer.lastElementChild;
+
+        newestUserMessage.scrollIntoView({
+
+            behavior: "smooth",
+            block: "start"
+        });
+
+        if (currentChatId !== null) {
+
+            delete chatDrafts[currentChatId];
+        }
+
+        questionInput.value = "";
+
+        // ai-row & loading-row uses existing ai-row so the loading animation appears where AI response is
+            // space between them means this HTML element has two separate CSS classes
+        // ai-loading is the actual loading indicator container
+        // loading-spinner & loading-text are empty HTML elements to put animated visual in place
+        chatContainer.insertAdjacentHTML("beforeend", `
+
+            <div class="ai-row loading-row">
+                <div class="ai-loading">
+                    <span class="loading-spinner"></span>
+                    <span class="loading-text">Thinking...</span>
+                </div>
+            </div>
+        `);
+
+        // store the loading row so it can be removed when the AI starts responding
+        const loadingRow = chatContainer.querySelector(".loading-row");
+
+        const loadingMessages = [
+
+            "Thinking...",
+            "Analyzing...",
+            "Working through it...",
+            "Preparing response...",
+            "Almost done..."
+        ]
+
+        // grabs the loading text so JS can change what it says
+        const loadingMessagesCycle = loadingRow.querySelector(".loading-text");
+
+        let loadingMessageIndex = 0;
+
+        // changes the loading message every 2 seconds
+        // setInterval(function, time)
+        const loadingMessageInterval = setInterval(() => {
+
+            // the function
+            loadingMessageIndex += 1;
+
+            // loops back to the first mesage after reaching the end of the array
+            loadingMessageIndex = loadingMessageIndex % loadingMessages.length;
+
+            // changes the text to the current loading messages
+            loadingMessagesCycle.textContent = loadingMessages[loadingMessageIndex];
+
+        // the time
+        }, 2000);
         
         // send the question to the FastAPI backend
         // fetch is like requests.post()
@@ -399,7 +480,8 @@ askButton.addEventListener("click", async function () {
         const decoder = new TextDecoder();
 
         // creates an empty AI message element that the streamed text will fill
-        // refer to definition above for insertAdjacentHTML...
+        // insertAdjacentHTML = adds new HTML at a specific position without replacing existing HTML
+        // beforeend = inserts the new HTML at the end, but still inside the selected HTML
         chatContainer.insertAdjacentHTML("beforeend", `
         
             <div class="ai-row">
@@ -412,6 +494,9 @@ askButton.addEventListener("click", async function () {
 
         // stores all text chunks together as one complete answer
         let fullAnswer = "";
+
+        // tracks whether the first AI text chunk has arrived
+        let firstChunkReceived = false;
 
         while (true) {
 
@@ -429,6 +514,17 @@ askButton.addEventListener("click", async function () {
             // .decode() converts the byte chunk into text
             // stream: true = tells TextDecoder that more chunks are still coming
             const textChunk = decoder.decode(value, { stream: true });
+
+            if (!firstChunkReceived) {
+
+                // stops the loading message cycle when the AI starts responding
+                clearInterval(loadingMessageInterval);
+
+                // remove the temporary loading message because the AI response is ready to stream
+                loadingRow.remove();
+                firstChunkReceived = true;
+
+            }
 
             fullAnswer += textChunk;
 
@@ -476,9 +572,6 @@ askButton.addEventListener("click", async function () {
             // change the ask button back 
             askButton.textContent = "Ask";
             askButton.disabled = false;
-
-            // clear the input box
-            questionInput.value = "";
         };
     }
 

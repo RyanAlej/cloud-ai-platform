@@ -60,6 +60,11 @@ app.add_middleware(
 
 create_tables()
 
+# AWS status endpoint
+@app.get("/status")
+def get_status():
+    return {"status": "ok"}
+
 
 # this is calling a URL. so https://127.0.0.10/ or https://127.0.0.10/ask, etc.
 # one HTTP request --> one database session
