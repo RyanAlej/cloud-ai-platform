@@ -30,14 +30,17 @@ services:
     # reload makes the server auto restart
     command: uvicorn backend.main:app --host 0.0.0.0 --port 8000 --reload
 
+    restart: unless-stopped
+
   
   # changing the database host from your mac (localhost) to the PostgreSQL Docker container (postgres)
   # SHORTER: you're telling FastAPI to connect to the PostgreSQL container instead of your mac
   postgres:
 
     # download the official PostgresSQL 17 image from Docker Hub
-    image: postgres:17
+    image: pgvector/pgvector:pg17
     container_name: maghub-db
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}

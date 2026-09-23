@@ -13,6 +13,8 @@ from typing import Optional
 # import BaseModel = class inside that library
 from pydantic import BaseModel
 
+from pgvector.sqlalchemy import Vector
+
 
 # this expects data from the user
 class QuestionRequest(BaseModel):
@@ -92,3 +94,16 @@ class Conversation(Base):
     question: Mapped[str] = mapped_column(String)
 
     answer: Mapped[str] = mapped_column(String)
+
+
+class KnowledgeChunk(Base):
+
+    __tablename__ = "knowledge_chunks"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    source_name: Mapped[str] = mapped_column(String)
+    source_url: Mapped[str] = mapped_column(String)
+    content: Mapped[str] = mapped_column(Text)
+
+    # store the numeric embedding for this text chunk so pgvector can compare its meaning to user questions
+    embedding: Mapped[list[float]] = mapped_column(Vector(1536))

@@ -29,6 +29,18 @@ const unreadChatIds = new Set();
 
 const newChatButton = document.getElementById("newChatButton");
 
+
+const knowledgeBaseButton = document.getElementById("knowledgeBaseButton");
+
+const closeKnowledgeBaseButton = document.getElementById("closeKnowledgeBaseButton");
+
+const knowledgeBaseContainer = document.getElementById("knowledgeBaseContainer");
+
+const settingsButton = document.getElementById("settingsButton");
+
+const aboutButton = document.getElementById("aboutButton");
+
+
 const contextMenu = document.getElementById("contextMenu");
 
 const deleteChat = document.getElementById("deleteChat");
@@ -276,6 +288,42 @@ newChatButton.addEventListener("click", function() {
     document.body.classList.remove("sidebar-open");
 
     questionInput.focus();
+});
+
+
+knowledgeBaseContainer.style.display = "none";
+
+knowledgeBaseButton.addEventListener("click", function() {
+
+    chatContainer.style.display = "none";
+
+    inputBar.style.display = "none";
+
+    sidebarToggle.style.display ="none";
+
+    sidebar.classList.add("collapsed");
+    document.body.classList.remove("sidebar-open")
+
+    header.classList.add("knowledge-base-header");
+
+    // block means SHOW the knowledge base when clicking the button
+    knowledgeBaseContainer.style.display = "block";
+});
+
+closeKnowledgeBaseButton.addEventListener("click", function() {
+
+    // when clicing the X close button, now the knowledge base container closes and shows none
+    knowledgeBaseContainer.style.display = "none";
+
+    chatContainer.style.display = "";
+
+    inputBar.style.display = "";
+
+    sidebarToggle.style.display ="";
+
+    sidebar.classList.remove("collapsed");
+
+    header.classList.remove("knowledge-base-header");
 });
 
 

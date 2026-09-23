@@ -143,6 +143,105 @@ body.sidebar-open #header {
     margin-top: 10px;
 }
 
+#knowledgeBaseContainer {
+
+    flex: none;
+    flex-direction: column;
+    display: flex;
+    position: relative;
+    width: 100%;
+
+    /* at least the full screen height */
+    min-height: 100vh;
+
+    padding-left: 20px;
+    padding-top: 60px;
+    box-sizing: border-box;
+
+    font-size: 20px;
+}
+
+.knowledge-source {
+
+    margin-bottom: 40px;
+}
+
+#knowledgeBaseContainer h2 {
+
+    font-size: 22px;
+    font-weight: 350;
+    margin-bottom: 40px;
+}
+
+#knowledgeBaseContainer h3 {
+
+    font-size: 18px;
+    font-weight: 250;
+}
+
+#knowledgeBaseContainer p {
+
+    font-size: 14px;
+    font-weight: 250;
+}
+
+#knowledgeBaseContainer hr {
+
+    width: 100%;
+    margin-left: 0;
+}
+
+#knowledgeBaseContainer a {
+
+    font-size: 14px;
+    color: #5588dd;
+}
+
+#header.knowledge-base-header {
+
+    left: 20px;
+    top: 24px;
+    transform: none;
+
+    padding-bottom: 50px;
+}
+
+#closeKnowledgeBaseButton {
+
+    display: flex;
+    position: fixed;
+    align-items: center;
+    justify-content: center;
+
+    padding: 0;
+    line-height: 1;
+
+    right: 20px;
+    top: 18px;
+    font-size: 26px;
+
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+
+    border: none;
+    background-color: #434b51;
+    color: white;
+    cursor: pointer;
+
+    padding-bottom: 7px;
+}
+
+#closeKnowledgeBaseButton:hover {
+
+    background-color: #66636b;
+}
+
+#closeKnowledgeBaseButton span {
+
+    transform: translateY(2px);
+}
+
 .unread-dot {
 
     width: 8px;
